@@ -147,3 +147,42 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+
+# Vercel
+.vercel/
+
+# Supabase local development
+supabase/.temp/
+supabase/.branches/
+
+# Playwright test results
+playwright-report/
+test-results/
+
+# Local database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Local environment overrides
+*.local
+
+# Certificates and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+
+
+
