@@ -219,7 +219,7 @@
     transition: none;
   }
 
-  .page {
+  :global(html) {
     scroll-behavior: auto;
   }
 }
