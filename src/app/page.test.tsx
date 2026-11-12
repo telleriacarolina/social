@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import HomePage from "./page";
 
@@ -56,7 +56,6 @@ describe("HomePage", () => {
   it("renders all six platform feature cards", () => {
     render(<HomePage />);
 
-    expect(screen.getByRole("article")).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(6);
 
     expect(
