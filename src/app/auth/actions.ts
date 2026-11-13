@@ -14,6 +14,47 @@ function getFormValue(formData: FormData, name: string): string {
   return typeof value === "string" ? value : "";
 }
 
+function logAuthError(operation: string, error: unknown): void {
+  const details =
+    typeof error === "object" && error !== null
+      ? (error as {
+          name?: unknown;
+          message?: unknown;
+          code?: unknown;
+          status?: unknown;
+        })
+      : {};
+
+  let message =
+    typeof details.message === "string" ? details.message : "Unknown error";
+
+  for (const secret of [
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    process.env.SUPABASE_SECRET_KEY,
+    process.env.SUPABASE_JWT_SECRET,
+  ]) {
+    if (secret) message = message.split(secret).join("[REDACTED]");
+  }
+
+  message = message
+    .replace(/Bearer\s+\S+/gi, "Bearer [REDACTED]")
+    .replace(
+      /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g,
+      "[REDACTED_TOKEN]",
+    )
+    .replace(/\bsb_(?:secret|publishable)_[A-Za-z0-9_-]+\b/g, "[REDACTED_KEY]");
+
+  console.error("[auth] action failed", {
+    operation,
+    name: typeof details.name === "string" ? details.name : "Error",
+    message,
+    code: typeof details.code === "string" ? details.code : undefined,
+    status: typeof details.status === "number" ? details.status : undefined,
+  });
+}
+
 function getSafeNextPath(value: string): string {
   if (
     value.startsWith("/") &&
@@ -68,11 +109,13 @@ export async function signInAction(
     });
 
     if (error) {
+      logAuthError("signIn", error);
       return {
         error: "Unable to sign in. Check your details and try again.",
       };
     }
-  } catch {
+  } catch (error) {
+    logAuthError("signIn", error);
     return {
       error: "Sign-in is temporarily unavailable. Please try again.",
     };
@@ -111,13 +154,14 @@ export async function signUpAction(
     });
 
     if (error) {
+      logAuthError("signUp", error);
       return {
         error: "Unable to create your account. Please try again.",
       };
     }
-
     hasSession = Boolean(data.session);
-  } catch {
+  } catch (error) {
+    logAuthError("signUp", error);
     return {
       error: "Account creation is temporarily unavailable. Please try again.",
     };
@@ -208,7 +252,7 @@ export async function updatePasswordAction(
     };
   }
 
-  redirect("/account?password=updated");
+  redirect("/profile?password=updated");
 }
 
 export async function signOutAction(): Promise<void> {
@@ -223,7 +267,7 @@ export async function signOutAction(): Promise<void> {
   }
 
   if (signOutFailed) {
-    redirect("/account?signout=failed");
+    redirect("/login?error=signout");
   }
 
   redirect("/");
