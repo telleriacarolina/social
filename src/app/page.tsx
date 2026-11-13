@@ -55,9 +55,15 @@ export default function HomePage() {
           <a href="#about">About</a>
         </nav>
 
-        <Link href="#features" className={styles.headerAction}>
-          Explore Social
-        </Link>
+        <div className={styles.headerActions}>
+          <Link href="/login" className={styles.loginButton}>
+            Log in
+          </Link>
+
+          <Link href="/signup" className={styles.headerAction}>
+            Sign up
+          </Link>
+        </div>
       </header>
 
       <section className={styles.hero} id="about">
