@@ -14,7 +14,7 @@ function getSafeNextPath(value: string | null): string {
     return value;
   }
 
-  return "/account";
+  return "/profile";
 }
 
 export async function GET(request: NextRequest) {

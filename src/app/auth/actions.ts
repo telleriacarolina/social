@@ -252,7 +252,7 @@ export async function updatePasswordAction(
     };
   }
 
-  redirect("/account?password=updated");
+  redirect("/profile?password=updated");
 }
 
 export async function signOutAction(): Promise<void> {
@@ -267,7 +267,7 @@ export async function signOutAction(): Promise<void> {
   }
 
   if (signOutFailed) {
-    redirect("/account?signout=failed");
+    redirect("/login?error=signout");
   }
 
   redirect("/");
