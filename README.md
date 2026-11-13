@@ -150,7 +150,7 @@ Expected variables include:
 ```dotenv
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
 # Application
@@ -188,21 +188,49 @@ Development will proceed in stages:
 
 ## Development Status
 
-<badge color="warning">Early development</badge>
+<badge color="warning">Foundation stage</badge>
 
-This repository is currently in its initial planning and foundation stage.
-
-The features, architecture, and technology choices described above represent the intended direction of the project. They should not be interpreted as completed or production-ready functionality.
-
-Implementation, testing, and deployment will be documented as development progresses.
+The initial Next.js application foundation and Supabase authentication/database infrastructure have been implemented. The broader social networking features remain under development and should not be considered production-ready until their implementation and security validation are complete.
 
 ---
 
 ## Deployment
 
-Vercel is the planned hosting platform.
+The application is designed to deploy to [Vercel](https://vercel.com/) using its native Next.js framework support.
 
-The application will be configured for deployment after the initial Next.js foundation, Supabase integration, and required environment variables are established.
+### Vercel project settings
+
+- Framework preset: Next.js (automatic detection).
+- Root directory: repository root.
+- Build command: `npm run build`.
+- Install command: `npm ci` (Vercel may use its detected package-manager default).
+- Output directory: leave the default; Next.js manages its own build output.
+- Node.js: select `26.x` in Vercel Project Settings. The current `package.json` engine range (`>=20.9.0`) permits Node.js 26. Do not select Node.js 20, which Vercel has deprecated for new deployments.
+
+No custom `vercel.json` is required for a standard Next.js deployment.
+
+### Environment variables
+
+Configure these variables in Vercel for Preview and Production:
+
+| Variable | Required now | Purpose |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable key |
+
+Only add privileged server-side credentials when a future server-side feature actually requires them. Never prefix secrets with `NEXT_PUBLIC_`.
+
+### Deployment verification
+
+After deploying:
+
+1. Confirm the Vercel deployment completes successfully.
+2. Open the deployed application and verify the landing page loads.
+3. Visit `/api/health` and confirm it returns HTTP 200 with a JSON status of `ok`.
+4. Test Supabase authentication after the authentication interface is implemented.
+5. Review Vercel deployment logs for runtime errors.
+
+The `/api/health` endpoint is a basic application liveness check. It does not verify Supabase connectivity, database availability, or authentication functionality.
 
 ---
 
