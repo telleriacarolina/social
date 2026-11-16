@@ -235,7 +235,8 @@ export async function updatePasswordAction(
 
     if (claimsError || !claimsData?.claims) {
       return {
-        error: "Your reset session is invalid or expired. Request another link.",
+        error:
+          "Your reset session is invalid or expired. Request another link.",
       };
     }
 

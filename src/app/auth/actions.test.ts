@@ -34,7 +34,7 @@ describe("signOutAction", () => {
     await expect(signOutAction()).rejects.toThrow("NEXT_REDIRECT:/");
   });
 
-  it("returns to the account page when Supabase reports a sign-out error", async () => {
+  it("redirects to the login page when Supabase reports a sign-out error", async () => {
     createClientMock.mockResolvedValue({
       auth: {
         signOut: vi.fn().mockResolvedValue({
@@ -44,15 +44,15 @@ describe("signOutAction", () => {
     });
 
     await expect(signOutAction()).rejects.toThrow(
-      "NEXT_REDIRECT:/account?signout=failed",
+      "NEXT_REDIRECT:/login?error=signout",
     );
   });
 
-  it("returns to the account page when sign-out throws", async () => {
+  it("redirects to the login page when sign-out throws", async () => {
     createClientMock.mockRejectedValue(new Error("Connection failed"));
 
     await expect(signOutAction()).rejects.toThrow(
-      "NEXT_REDIRECT:/account?signout=failed",
+      "NEXT_REDIRECT:/login?error=signout",
     );
   });
 });
