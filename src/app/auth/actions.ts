@@ -155,13 +155,16 @@ export async function signUpAction(
 
     if (error) {
       logAuthError("signUp", error);
+
       return {
         error: "Unable to create your account. Please try again.",
       };
     }
+
     hasSession = Boolean(data.session);
   } catch (error) {
     logAuthError("signUp", error);
+
     return {
       error: "Account creation is temporarily unavailable. Please try again.",
     };
@@ -173,7 +176,7 @@ export async function signUpAction(
 
   return {
     message:
-      "Account request received. Check your email for the confirmation link.",
+      "Your signup request has been received. If confirmation is required, check your email for a link to activate your account.",
   };
 }
 

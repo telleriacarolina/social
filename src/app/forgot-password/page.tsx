@@ -7,6 +7,8 @@ import {
   requestPasswordResetAction,
   type AuthActionState,
 } from "@/app/auth/actions";
+import pageStyles from "@/app/auth-pages.module.css";
+import formStyles from "@/components/auth/auth-form.module.css";
 
 const initialState: AuthActionState = {};
 
@@ -17,33 +19,62 @@ export default function ForgotPasswordPage() {
   );
 
   return (
-    <main>
-      <h1>Reset your password</h1>
-      <p>Enter your email address and we’ll send you a reset link if an account exists.</p>
+    <main className={pageStyles.page}>
+      <Link href="/login" className={pageStyles.brand}>
+        Social<span>.</span>
+      </Link>
 
-      <form action={formAction}>
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-          />
-        </div>
+      <section className={formStyles.formCard}>
+        <h1 className={formStyles.title}>Reset your password</h1>
 
-        {state.error ? <p role="alert">{state.error}</p> : null}
-        {state.message ? <p role="status">{state.message}</p> : null}
+        <p className={formStyles.description}>
+          Enter your email address and we’ll send you a reset link if an
+          account exists.
+        </p>
 
-        <button type="submit" disabled={pending}>
-          {pending ? "Sending..." : "Send reset link"}
-        </button>
-      </form>
+        <form action={formAction} className={formStyles.form}>
+          <div className={formStyles.field}>
+            <label htmlFor="email" className={formStyles.label}>
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className={formStyles.input}
+            />
+          </div>
 
-      <p>
-        <Link href="/login">Back to sign in</Link>
-      </p>
+          {state.error ? (
+            <p className={formStyles.error} role="alert">
+              {state.error}
+            </p>
+          ) : null}
+
+          {state.message ? (
+            <p className={formStyles.message} role="status">
+              {state.message}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={pending}
+            className={formStyles.submit}
+          >
+            {pending ? "Sending..." : "Send reset link"}
+          </button>
+        </form>
+
+        <p className={formStyles.helper}>
+          Remember your password?{" "}
+          <Link href="/login" className={formStyles.link}>
+            Sign in
+          </Link>
+        </p>
+      </section>
     </main>
   );
 }
