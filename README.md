@@ -236,6 +236,38 @@ The `/api/health` endpoint is a basic application liveness check. It does not ve
 
 ## Contributing
 
+### Server-only application email (Resend)
+
+The reusable `sendEmail({ to, subject, text })` helper in
+`src/lib/email/resend.ts` uses native server-side fetch. Import it only from
+trusted server application code. Its `server-only` boundary prevents client
+imports; it is not a Server Action or a public email endpoint. Do not expose
+arbitrary recipients through a route or form. Callers must authorize the
+business operation and choose the recipient server-side.
+
+Configure these server-only environment variables (never use `NEXT_PUBLIC_`):
+
+| Variable | Purpose |
+| --- | --- |
+| `RESEND_API_KEY` | Resend API key with permission to send email |
+| `RESEND_FROM_EMAIL` | Bare sender email address on a domain verified in Resend |
+
+Verify your sending domain in Resend and use an address such as
+`notifications@your-verified-domain.com`. Do not use `onboarding@resend.dev` as
+a production sender; this helper rejects the Resend test domain. Domain
+verification and actual delivery are checked by Resend, not inferred locally.
+Missing/invalid configuration fails before making a request.
+
+The helper accepts one recipient and plain-text content, rejects invalid
+mailboxes and header injection, times out after ten seconds, and throws
+sanitized `MailError` errors with a category and optional HTTP status. It does
+not log credentials, message content, or provider responses, and does not
+automatically retry requests (which could duplicate emails).
+
+This is independent application email infrastructure. Supabase signup
+confirmation, password reset, and all existing Auth email behavior are
+unchanged. Automated mailer tests mock fetch; they send no email.
+
 Contributions, ideas, bug reports, and suggestions are welcome as the project develops.
 
 Please use GitHub Issues and Pull Requests to discuss proposed changes and improvements.
