@@ -12,7 +12,7 @@ export default async function UpdatePasswordPage() {
   }
 
   return (
-    <main>
+    <main className="page-shell page-shell--auth">
       <UpdatePasswordForm />
     </main>
   );

@@ -21,32 +21,32 @@ export default async function ProfilePage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profileError) {
-    return (
-      <main>
-        <h1>Your profile</h1>
-        <p role="alert">We could not load your profile. Please try again.</p>
-        <form action={signOutAction}>
-          <button type="submit">Sign out</button>
-        </form>
-      </main>
-    );
-  }
-
   return (
-    <main>
-      <h1>Your profile</h1>
-      <p>{user.email}</p>
-      <ProfileEditor
-        initialValues={{
-          username: profile?.username ?? "",
-          displayName: profile?.display_name ?? "",
-          bio: profile?.bio ?? "",
-        }}
-      />
-      <form action={signOutAction}>
-        <button type="submit">Sign out</button>
-      </form>
+    <main className="page-shell page-shell--wide">
+      <section className="content-card">
+        <h1 className="page-title">Your profile</h1>
+        <p className="page-description">{user.email}</p>
+
+        {profileError ? (
+          <p className="notice notice--error" role="alert">
+            We could not load your profile. Please try again.
+          </p>
+        ) : (
+          <ProfileEditor
+            initialValues={{
+              username: profile?.username ?? "",
+              displayName: profile?.display_name ?? "",
+              bio: profile?.bio ?? "",
+            }}
+          />
+        )}
+
+        <form action={signOutAction} className="page-actions">
+          <button className="button button--secondary" type="submit">
+            Sign out
+          </button>
+        </form>
+      </section>
     </main>
   );
 }
