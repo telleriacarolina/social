@@ -4,8 +4,16 @@ import { signOutAction } from "@/app/auth/actions";
 import { ProfileEditor } from "@/components/profile/profile-editor";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function ProfilePage() {
+type ProfilePageProps = {
+  searchParams?: Promise<{ password?: string }>;
+};
+
+export default async function ProfilePage({
+  searchParams = Promise.resolve({}),
+}: ProfilePageProps = {}) {
+  const params = await searchParams;
   const supabase = await createClient();
+
   const {
     data: { user },
     error: userError,
@@ -26,6 +34,12 @@ export default async function ProfilePage() {
       <section className="content-card">
         <h1 className="page-title">Your profile</h1>
         <p className="page-description">{user.email}</p>
+
+        {params.password === "updated" ? (
+          <p className="notice notice--success" role="status">
+            Your password has been updated successfully.
+          </p>
+        ) : null}
 
         {profileError ? (
           <p className="notice notice--error" role="alert">
