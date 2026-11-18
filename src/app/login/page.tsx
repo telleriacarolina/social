@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 
 import { AuthForm } from "@/components/auth/auth-form";
@@ -30,6 +29,12 @@ export default async function LoginPage({
         <p className={styles.notice} role="alert">
           Your confirmation or password-reset link could not be verified.
           Please request a new link and try again.
+        </p>
+      ) : null}
+
+      {params.error === "signout" ? (
+        <p className={styles.notice} role="alert">
+          We could not complete sign out. Please try again.
         </p>
       ) : null}
 
