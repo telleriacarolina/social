@@ -4,8 +4,16 @@ import { signOutAction } from "@/app/auth/actions";
 import { ProfileEditor } from "@/components/profile/profile-editor";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function ProfilePage() {
+type ProfilePageProps = {
+  searchParams?: Promise<{ password?: string }>;
+};
+
+export default async function ProfilePage({
+  searchParams = Promise.resolve({}),
+}: ProfilePageProps = {}) {
+  const params = await searchParams;
   const supabase = await createClient();
+
   const {
     data: { user },
     error: userError,
@@ -21,32 +29,38 @@ export default async function ProfilePage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profileError) {
-    return (
-      <main>
-        <h1>Your profile</h1>
-        <p role="alert">We could not load your profile. Please try again.</p>
-        <form action={signOutAction}>
-          <button type="submit">Sign out</button>
-        </form>
-      </main>
-    );
-  }
-
   return (
-    <main>
-      <h1>Your profile</h1>
-      <p>{user.email}</p>
-      <ProfileEditor
-        initialValues={{
-          username: profile?.username ?? "",
-          displayName: profile?.display_name ?? "",
-          bio: profile?.bio ?? "",
-        }}
-      />
-      <form action={signOutAction}>
-        <button type="submit">Sign out</button>
-      </form>
+    <main className="page-shell page-shell--wide">
+      <section className="content-card">
+        <h1 className="page-title">Your profile</h1>
+        <p className="page-description">{user.email}</p>
+
+        {params.password === "updated" ? (
+          <p className="notice notice--success" role="status">
+            Your password has been updated successfully.
+          </p>
+        ) : null}
+
+        {profileError ? (
+          <p className="notice notice--error" role="alert">
+            We could not load your profile. Please try again.
+          </p>
+        ) : (
+          <ProfileEditor
+            initialValues={{
+              username: profile?.username ?? "",
+              displayName: profile?.display_name ?? "",
+              bio: profile?.bio ?? "",
+            }}
+          />
+        )}
+
+        <form action={signOutAction} className="page-actions">
+          <button className="button button--secondary" type="submit">
+            Sign out
+          </button>
+        </form>
+      </section>
     </main>
   );
 }

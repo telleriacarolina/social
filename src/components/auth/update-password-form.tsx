@@ -14,14 +14,20 @@ export function UpdatePasswordForm() {
   );
 
   return (
-    <section>
-      <h1>Choose a new password</h1>
-      <p>Your new password must be at least 8 characters.</p>
+    <section className="content-card">
+      <h1 className="page-title">Choose a new password</h1>
 
-      <form action={formAction}>
-        <div>
-          <label htmlFor="password">New password</label>
+      <p className="page-description">
+        Your new password must be at least 8 characters.
+      </p>
+
+      <form action={formAction} className="form-stack">
+        <div className="form-field">
+          <label className="form-label" htmlFor="password">
+            New password
+          </label>
           <input
+            className="form-control"
             id="password"
             name="password"
             type="password"
@@ -31,9 +37,12 @@ export function UpdatePasswordForm() {
           />
         </div>
 
-        <div>
-          <label htmlFor="confirmPassword">Confirm new password</label>
+        <div className="form-field">
+          <label className="form-label" htmlFor="confirmPassword">
+            Confirm new password
+          </label>
           <input
+            className="form-control"
             id="confirmPassword"
             name="confirmPassword"
             type="password"
@@ -43,16 +52,31 @@ export function UpdatePasswordForm() {
           />
         </div>
 
-        {state.error ? <p role="alert">{state.error}</p> : null}
-        {state.message ? <p role="status">{state.message}</p> : null}
+        {state.error ? (
+          <p className="notice notice--error" role="alert">
+            {state.error}
+          </p>
+        ) : null}
 
-        <button type="submit" disabled={pending}>
+        {state.message ? (
+          <p className="notice notice--success" role="status">
+            {state.message}
+          </p>
+        ) : null}
+
+        <button
+          className="button button--primary"
+          type="submit"
+          disabled={pending}
+        >
           {pending ? "Updating..." : "Update password"}
         </button>
       </form>
 
-      <p>
-        <Link href="/login">Back to sign in</Link>
+      <p className="page-description">
+        <Link className="link" href="/login">
+          Back to sign in
+        </Link>
       </p>
     </section>
   );

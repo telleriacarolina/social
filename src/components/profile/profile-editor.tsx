@@ -57,10 +57,13 @@ export function ProfileEditor({ initialValues }: ProfileEditorProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="username">Username</label>
+    <form className="form-stack" onSubmit={handleSubmit}>
+      <div className="form-field">
+        <label className="form-label" htmlFor="username">
+          Username
+        </label>
         <input
+          className="form-control"
           id="username"
           name="username"
           value={values.username}
@@ -70,12 +73,17 @@ export function ProfileEditor({ initialValues }: ProfileEditorProps) {
           pattern="[a-zA-Z0-9_]*"
           autoComplete="username"
         />
-        <small>3–30 letters, numbers, or underscores.</small>
+        <small className="page-description">
+          3–30 letters, numbers, or underscores.
+        </small>
       </div>
 
-      <div>
-        <label htmlFor="displayName">Display name</label>
+      <div className="form-field">
+        <label className="form-label" htmlFor="displayName">
+          Display name
+        </label>
         <input
+          className="form-control"
           id="displayName"
           name="displayName"
           value={values.displayName}
@@ -86,9 +94,12 @@ export function ProfileEditor({ initialValues }: ProfileEditorProps) {
         />
       </div>
 
-      <div>
-        <label htmlFor="bio">Bio</label>
+      <div className="form-field">
+        <label className="form-label" htmlFor="bio">
+          Bio
+        </label>
         <textarea
+          className="form-control"
           id="bio"
           name="bio"
           value={values.bio}
@@ -98,10 +109,23 @@ export function ProfileEditor({ initialValues }: ProfileEditorProps) {
         />
       </div>
 
-      {error ? <p role="alert">{error}</p> : null}
-      {message ? <p role="status">{message}</p> : null}
+      {error ? (
+        <p className="notice notice--error" role="alert">
+          {error}
+        </p>
+      ) : null}
 
-      <button type="submit" disabled={loading}>
+      {message ? (
+        <p className="notice notice--success" role="status">
+          {message}
+        </p>
+      ) : null}
+
+      <button
+        className="button button--primary"
+        type="submit"
+        disabled={loading}
+      >
         {loading ? "Saving..." : "Save profile"}
       </button>
     </form>
