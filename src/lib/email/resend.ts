@@ -1,50 +1,20 @@
 import "server-only";
 
-export type MailInput = {
-  to: string;
-  subject: string;
-  text: string;
-};
+import {
+  isEmail,
+  MailError,
+  validateMailInput,
+  type MailInput,
+} from "./types";
 
-export class MailError extends Error {
-  constructor(
-    public readonly code: "configuration" | "input" | "delivery",
-    message: string,
-    public readonly status?: number,
-  ) {
-    super(message);
-    this.name = "MailError";
-  }
-}
-
-// Accept a single bare mailbox, not display names, lists, or header syntax.
-function isEmail(value: unknown): value is string {
-  if (typeof value !== "string" || value.length > 254) {
-    return false;
-  }
-
-  const [local] = value.split("@");
-
-  if (
-    !local ||
-    local.length > 64 ||
-    local.startsWith(".") ||
-    local.endsWith(".") ||
-    local.includes("..")
-  ) {
-    return false;
-  }
-
-  return /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/.test(
-    value,
-  );
-}
+export { MailError };
+export type { MailInput };
 
 /**
  * For trusted server-side callers only. Never expose this as an arbitrary-
  * recipient endpoint or pass unchecked request/form data directly to it.
  */
-export async function sendEmail(input: MailInput): Promise<void> {
+export async function sendResendEmail(input: MailInput): Promise<void> {
   const rawApiKey = process.env.RESEND_API_KEY;
   const apiKey = rawApiKey?.trim();
   const from = process.env.RESEND_FROM_EMAIL;
@@ -67,22 +37,7 @@ export async function sendEmail(input: MailInput): Promise<void> {
     );
   }
 
-  if (
-    !input ||
-    !isEmail(input.to) ||
-    typeof input.subject !== "string" ||
-    !input.subject.trim() ||
-    input.subject.length > 998 ||
-    /[\r\n]/.test(input.subject) ||
-    typeof input.text !== "string" ||
-    !input.text.trim() ||
-    input.text.length > 100_000
-  ) {
-    throw new MailError(
-      "input",
-      "Email recipient, subject, or text is invalid.",
-    );
-  }
+  validateMailInput(input);
 
   let response: Response;
 
@@ -117,3 +72,6 @@ export async function sendEmail(input: MailInput): Promise<void> {
     );
   }
 }
+
+// Backwards-compatible export for existing direct Resend callers.
+export const sendEmail = sendResendEmail;

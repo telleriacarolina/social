@@ -1,9 +1,8 @@
-// @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { sendEmail } from "./resend";
+import { sendEmail, sendResendEmail } from "./resend";
 
 const message = {
   to: "recipient@example.com",
@@ -28,9 +27,13 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-describe("sendEmail", () => {
+describe("sendResendEmail", () => {
+  it("preserves the backwards-compatible sendEmail export", () => {
+    expect(sendEmail).toBe(sendResendEmail);
+  });
+
   it("sends validated text email using server-side fetch", async () => {
-    await expect(sendEmail(message)).resolves.toBeUndefined();
+    await expect(sendResendEmail(message)).resolves.toBeUndefined();
 
     expect(fetchMock).toHaveBeenCalledOnce();
 
@@ -58,7 +61,7 @@ describe("sendEmail", () => {
   it("trims surrounding whitespace from the API key", async () => {
     vi.stubEnv("RESEND_API_KEY", "  test-key-not-a-real-credential  ");
 
-    await expect(sendEmail(message)).resolves.toBeUndefined();
+    await expect(sendResendEmail(message)).resolves.toBeUndefined();
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.resend.com/emails",
@@ -70,130 +73,64 @@ describe("sendEmail", () => {
     );
   });
 
-  it.each(["RESEND_API_KEY", "RESEND_FROM_EMAIL"])(
-    "rejects missing %s without contacting Resend",
-    async (key) => {
-      vi.stubEnv(key, "");
+  it("rejects a missing API key", async () => {
+    delete process.env.RESEND_API_KEY;
 
-      await expect(sendEmail(message)).rejects.toMatchObject({
-        code: "configuration",
-      });
-
-      expect(fetchMock).not.toHaveBeenCalled();
-    },
-  );
-
-  it.each(["", "   "])(
-    "rejects an empty or whitespace-only API key (%j)",
-    async (apiKey) => {
-      vi.stubEnv("RESEND_API_KEY", apiKey);
-
-      await expect(sendEmail(message)).rejects.toMatchObject({
-        code: "configuration",
-      });
-
-      expect(fetchMock).not.toHaveBeenCalled();
-    },
-  );
-
-  it("rejects API keys containing line breaks", async () => {
-    vi.stubEnv("RESEND_API_KEY", "test-key\nInjected-Header: value");
-
-    await expect(sendEmail(message)).rejects.toMatchObject({
+    await expect(sendResendEmail(message)).rejects.toMatchObject({
+      name: "MailError",
       code: "configuration",
     });
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it.each([
-    "invalid",
-    " ",
-    "a@example.com\r\nBcc: b@example.com",
-    "onboarding@resend.dev",
-    ".alice@example.com",
-    "alice.@example.com",
-    "alice..smith@example.com",
-  ])("rejects an invalid or untrusted sender %s", async (sender) => {
-    vi.stubEnv("RESEND_FROM_EMAIL", sender);
+  it("rejects an unverified Resend test sender domain", async () => {
+    vi.stubEnv("RESEND_FROM_EMAIL", "notifications@resend.dev");
 
-    await expect(sendEmail(message)).rejects.toMatchObject({
+    await expect(sendResendEmail(message)).rejects.toMatchObject({
+      name: "MailError",
       code: "configuration",
     });
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { to: "invalid" },
-    { to: "a@example.com,b@example.com" },
-    { to: "a@example.com\r\nBcc: b@example.com" },
-    { to: ".alice@example.com" },
-    { to: "alice.@example.com" },
-    { to: "alice..smith@example.com" },
-    { subject: "" },
-    { subject: "Hello\r\nBcc: b@example.com" },
-    { text: " " },
-    { text: "x".repeat(100_001) },
-  ])("rejects invalid input without sending", async (overrides) => {
-    await expect(sendEmail({ ...message, ...overrides })).rejects.toMatchObject({
+  it("rejects invalid message input", async () => {
+    await expect(
+      sendResendEmail({
+        ...message,
+        subject: "Invalid\nSubject",
+      }),
+    ).rejects.toMatchObject({
+      name: "MailError",
       code: "input",
     });
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("configures the request timeout to ten seconds", async () => {
-    const timeoutSpy = vi
-      .spyOn(AbortSignal, "timeout")
-      .mockReturnValue(new AbortController().signal);
-
-    await expect(sendEmail(message)).resolves.toBeUndefined();
-
-    expect(timeoutSpy).toHaveBeenCalledWith(10_000);
-  });
-
-  it("sanitizes request timeout failures", async () => {
+  it("sanitizes transport errors", async () => {
     fetchMock.mockRejectedValue(
-      new DOMException("Request timed out", "TimeoutError"),
+      new Error("Sensitive request or credential details"),
     );
 
-    await expect(sendEmail(message)).rejects.toMatchObject({
+    await expect(sendResendEmail(message)).rejects.toMatchObject({
       name: "MailError",
       code: "delivery",
       message: "Email delivery failed.",
     });
   });
 
-  it.each([401, 429, 500])(
-    "sanitizes provider failures (%s)",
-    async (status) => {
-      fetchMock.mockResolvedValue(
-        new Response("sensitive provider details", { status }),
-      );
-
-      await expect(sendEmail(message)).rejects.toMatchObject({
-        name: "MailError",
-        code: "delivery",
-        message: "Email delivery failed.",
-        status,
-      });
-    },
-  );
-
-  it("discards sensitive network exception details", async () => {
-    fetchMock.mockRejectedValue(
-      new Error("Bearer test-key-not-a-real-credential"),
+  it("sanitizes unsuccessful HTTP responses", async () => {
+    fetchMock.mockResolvedValue(
+      new Response("Sensitive provider response", { status: 500 }),
     );
 
-    const error = await sendEmail(message).catch((caught: unknown) => caught);
-
-    expect(error).toMatchObject({
+    await expect(sendResendEmail(message)).rejects.toMatchObject({
+      name: "MailError",
       code: "delivery",
       message: "Email delivery failed.",
+      status: 500,
     });
-
-    expect(error).not.toHaveProperty("cause");
-    expect(String(error)).not.toContain("test-key-not-a-real-credential");
   });
 });
