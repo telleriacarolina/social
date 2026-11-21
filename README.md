@@ -205,7 +205,7 @@ The application is designed to deploy to [Vercel](https://vercel.com/) using its
 - Build command: `npm run build`.
 - Install command: `npm ci` (Vercel may use its detected package-manager default).
 - Output directory: leave the default; Next.js manages its own build output.
-- Node.js: select `26.x` in Vercel Project Settings. The current `package.json` engine range (`>=20.9.0`) permits Node.js 26. Do not select Node.js 20, which Vercel has deprecated for new deployments.
+- Node.js: select `22.x` in Vercel Project Settings. The repository pins Node.js 22.x in `package.json` and `.nvmrc`; use this version for local development and deployments.
 
 No custom `vercel.json` is required for a standard Next.js deployment.
 
