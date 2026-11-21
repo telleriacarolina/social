@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { MailError, sendEmail } from "./resend";
+import { sendEmail } from "./resend";
 
 const message = {
   to: "recipient@example.com",
