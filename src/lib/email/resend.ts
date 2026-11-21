@@ -45,10 +45,15 @@ function isEmail(value: unknown): value is string {
  * recipient endpoint or pass unchecked request/form data directly to it.
  */
 export async function sendEmail(input: MailInput): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const rawApiKey = process.env.RESEND_API_KEY;
+  const apiKey = rawApiKey?.trim();
   const from = process.env.RESEND_FROM_EMAIL;
 
-  if (!apiKey?.trim() || /[\r\n]/.test(apiKey) || !isEmail(from)) {
+  if (
+    !apiKey ||
+    /[\r\n]/.test(rawApiKey ?? "") ||
+    !isEmail(from)
+  ) {
     throw new MailError(
       "configuration",
       "Email service is not configured correctly.",
