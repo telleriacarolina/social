@@ -205,7 +205,7 @@ The application is designed to deploy to [Vercel](https://vercel.com/) using its
 - Build command: `npm run build`.
 - Install command: `npm ci` (Vercel may use its detected package-manager default).
 - Output directory: leave the default; Next.js manages its own build output.
-- Node.js: select `26.x` in Vercel Project Settings. The current `package.json` engine range (`>=20.9.0`) permits Node.js 26. Do not select Node.js 20, which Vercel has deprecated for new deployments.
+- Node.js: select `22.x` in Vercel Project Settings. The repository pins Node.js 22.x in `package.json` and `.nvmrc`; use this version for local development and deployments.
 
 No custom `vercel.json` is required for a standard Next.js deployment.
 
@@ -235,6 +235,102 @@ The `/api/health` endpoint is a basic application liveness check. It does not ve
 ---
 
 ## Contributing
+
+### Server-only application email (Resend)
+
+The reusable `sendEmail({ to, subject, text })` helper in
+`src/lib/email/resend.ts` uses native server-side fetch. Import it only from
+trusted server application code. Its `server-only` boundary prevents client
+imports; it is not a Server Action or a public email endpoint.
+
+Do not expose arbitrary recipients through a route or form. Callers must
+authorize the business operation and choose the recipient server-side.
+
+#### Resend account and API key setup
+
+1. Create or sign in to your account at [Resend](https://resend.com/).
+2. Add a sending domain in the Resend dashboard.
+3. Publish the DNS records provided by Resend.
+4. Wait until Resend confirms that the domain is verified.
+5. Create an API key with permission to send email.
+6. Store the key in a server-side environment variable.
+
+Use a sender address belonging to your verified domain, for example:
+
+`notifications@your-verified-domain.com`
+
+This is an example only. It is not a configured or verified sender.
+
+#### Local development setup
+
+Add these entries to your untracked `.env.local` file:
+
+```dotenv
+RESEND_API_KEY=re_your_actual_api_key
+RESEND_FROM_EMAIL=notifications@your-verified-domain.com
+```
+
+Replace the example values with your actual API key and verified sender
+address.
+
+Restart the local development server after changing environment variables.
+
+Never commit `.env.local` or actual credentials to GitHub.
+
+#### Vercel environment setup
+
+To configure Resend for deployed environments:
+
+1. Open your project in the [Vercel dashboard](https://vercel.com/dashboard).
+2. Navigate to **Settings → Environment Variables**.
+3. Add `RESEND_API_KEY` and enter your Resend API key.
+4. Add `RESEND_FROM_EMAIL` and enter your verified sender address.
+5. Select the environments that need email access:
+   - **Preview** for preview deployments.
+   - **Production** for production deployments.
+   - **Development** if you use Vercel's development environment.
+6. Save the variables.
+7. Redeploy the relevant deployment so the new values are available.
+
+Both variables must remain server-side. Never prefix them with
+`NEXT_PUBLIC_`.
+
+If an API key is exposed accidentally, revoke it in Resend and create a
+replacement.
+
+#### Configuration reference
+
+| Variable | Purpose |
+| --- | --- |
+| `RESEND_API_KEY` | Resend API key with permission to send email |
+| `RESEND_FROM_EMAIL` | Sender email address on a domain verified in Resend |
+
+The helper requires both variables. It trims surrounding whitespace from the
+API key and rejects missing or invalid configuration before making a request.
+
+Do not use `onboarding@resend.dev` as a production sender. The helper rejects
+the Resend test domain. Actual delivery requires a verified sending domain
+and a valid sender address accepted by Resend.
+
+#### Helper behavior and limitations
+
+The helper accepts one recipient and plain-text content. It validates email
+addresses and rejects header injection, applies a ten-second request timeout,
+and throws sanitized `MailError` errors with a category and optional HTTP
+status.
+
+It does not log credentials, message content, or provider responses. It does
+not automatically retry requests, avoiding accidental duplicate messages.
+
+This PR provides reusable email infrastructure only. It does not add a public
+email endpoint, signup notification, or application-specific email trigger.
+A trusted server-side caller must be implemented separately before an
+application workflow can send messages.
+
+Supabase signup confirmation, password reset, and existing Supabase Auth
+email behavior remain unchanged.
+
+Automated mailer tests mock `fetch`; they do not send real emails.
 
 Contributions, ideas, bug reports, and suggestions are welcome as the project develops.
 
