@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/auth/actions";
@@ -55,11 +56,20 @@ export default async function ProfilePage({
           />
         )}
 
-        <form action={signOutAction} className="page-actions">
-          <button className="button button--secondary" type="submit">
-            Sign out
-          </button>
-        </form>
+        <div className="page-actions">
+          <Link
+            href="/auth/update-password"
+            className="button button--secondary"
+          >
+            Change password
+          </Link>
+
+          <form action={signOutAction}>
+            <button className="button button--secondary" type="submit">
+              Sign out
+            </button>
+          </form>
+        </div>
       </section>
     </main>
   );
