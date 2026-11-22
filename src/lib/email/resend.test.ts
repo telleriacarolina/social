@@ -14,7 +14,9 @@ const fetchMock = vi.fn();
 
 beforeEach(() => {
   vi.stubEnv("RESEND_API_KEY", "test-key-not-a-real-credential");
-  vi.stubEnv("RESEND_FROM_EMAIL", "notifications@example.com");\n  vi.stubEnv("VERCEL_ENV", "preview");\n  vi.stubEnv("RESEND_ALLOW_TEST_SENDER", "false");
+  vi.stubEnv("RESEND_FROM_EMAIL", "notifications@example.com");
+  vi.stubEnv("RESEND_ALLOW_TEST_SENDER", "false");
+  vi.stubEnv("VERCEL_ENV", "preview");
   vi.stubGlobal("fetch", fetchMock);
 
   fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
@@ -84,15 +86,54 @@ describe("sendResendEmail", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("allows the exact onboarding sender only with Preview opt-in", async () => {
+  it("allows the exact Resend onboarding sender in Preview when explicitly enabled", async () => {
     vi.stubEnv("RESEND_FROM_EMAIL", "onboarding@resend.dev");
     vi.stubEnv("RESEND_ALLOW_TEST_SENDER", "true");
+    vi.stubEnv("VERCEL_ENV", "preview");
 
     await expect(sendResendEmail(message)).resolves.toBeUndefined();
+
     expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.resend.com/emails",
+      expect.objectContaining({
+        body: JSON.stringify({
+          from: "onboarding@resend.dev",
+          to: [message.to],
+          subject: message.subject,
+          text: message.text,
+        }),
+      }),
+    );
   });
 
-  it("rejects the onboarding sender in Production", async () => {
+  it("rejects other resend.dev senders even when Preview testing is enabled", async () => {
+    vi.stubEnv("RESEND_FROM_EMAIL", "notifications@resend.dev");
+    vi.stubEnv("RESEND_ALLOW_TEST_SENDER", "true");
+    vi.stubEnv("VERCEL_ENV", "preview");
+
+    await expect(sendResendEmail(message)).rejects.toMatchObject({
+      name: "MailError",
+      code: "configuration",
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects the onboarding sender when the test-sender opt-in is disabled", async () => {
+    vi.stubEnv("RESEND_FROM_EMAIL", "onboarding@resend.dev");
+    vi.stubEnv("RESEND_ALLOW_TEST_SENDER", "false");
+    vi.stubEnv("VERCEL_ENV", "preview");
+
+    await expect(sendResendEmail(message)).rejects.toMatchObject({
+      name: "MailError",
+      code: "configuration",
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects the onboarding sender outside Preview even when explicitly enabled", async () => {
     vi.stubEnv("RESEND_FROM_EMAIL", "onboarding@resend.dev");
     vi.stubEnv("RESEND_ALLOW_TEST_SENDER", "true");
     vi.stubEnv("VERCEL_ENV", "production");
@@ -101,39 +142,7 @@ describe("sendResendEmail", () => {
       name: "MailError",
       code: "configuration",
     });
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
 
-  it("rejects the onboarding sender outside Vercel Preview", async () => {
-    vi.stubEnv("RESEND_FROM_EMAIL", "onboarding@resend.dev");
-    vi.stubEnv("RESEND_ALLOW_TEST_SENDER", "true");
-    vi.stubEnv("VERCEL_ENV", "development");
-
-    await expect(sendResendEmail(message)).rejects.toMatchObject({
-      name: "MailError",
-      code: "configuration",
-    });
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects other resend.dev senders", async () => {
-    vi.stubEnv("RESEND_FROM_EMAIL", "notifications@resend.dev");
-    vi.stubEnv("RESEND_ALLOW_TEST_SENDER", "true");
-
-    await expect(sendResendEmail(message)).rejects.toMatchObject({
-      name: "MailError",
-      code: "configuration",
-    });
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects the onboarding sender without Preview opt-in", async () => {
-    vi.stubEnv("RESEND_FROM_EMAIL", "onboarding@resend.dev");
-
-    await expect(sendResendEmail(message)).rejects.toMatchObject({
-      name: "MailError",
-      code: "configuration",
-    });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

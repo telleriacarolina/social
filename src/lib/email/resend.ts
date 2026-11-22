@@ -30,16 +30,14 @@ export async function sendResendEmail(input: MailInput): Promise<void> {
     );
   }
 
-  const isResendTestSender =
-    from.toLowerCase() === "onboarding@resend.dev";
-  const testSenderExplicitlyEnabled =
-    process.env.VERCEL_ENV === "preview" &&
-    process.env.RESEND_ALLOW_TEST_SENDER === "true";
+  const isAllowedPreviewTestSender =
+    from.toLowerCase() === "onboarding@resend.dev" &&
+    process.env.RESEND_ALLOW_TEST_SENDER === "true" &&
+    process.env.VERCEL_ENV === "preview";
 
-  // Permit the shared sender only in explicitly opted-in Vercel Preview.
   if (
     from.split("@")[1].toLowerCase() === "resend.dev" &&
-    !(isResendTestSender && testSenderExplicitlyEnabled)
+    !isAllowedPreviewTestSender
   ) {
     throw new MailError(
       "configuration",
