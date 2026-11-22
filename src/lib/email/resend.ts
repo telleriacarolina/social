@@ -30,7 +30,17 @@ export async function sendResendEmail(input: MailInput): Promise<void> {
     );
   }
 
-  if (from.split("@")[1].toLowerCase() === "resend.dev") {
+  const isResendTestSender =
+    from.toLowerCase() === "onboarding@resend.dev";
+  const testSenderExplicitlyEnabled =
+    process.env.VERCEL_ENV === "preview" &&
+    process.env.RESEND_ALLOW_TEST_SENDER === "true";
+
+  // Permit the shared sender only in explicitly opted-in Vercel Preview.
+  if (
+    from.split("@")[1].toLowerCase() === "resend.dev" &&
+    !(isResendTestSender && testSenderExplicitlyEnabled)
+  ) {
     throw new MailError(
       "configuration",
       "Email sender must use your verified domain.",
