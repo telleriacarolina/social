@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { sendEmail } from "@/lib/email";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthActionState = {
@@ -243,12 +244,44 @@ export async function updatePasswordAction(
       };
     }
 
+    let accountEmail: string | undefined;
+
+    try {
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
+
+      if (!userError) {
+        accountEmail = userData.user?.email;
+      }
+    } catch {
+      // A user lookup failure must not block a valid password update.
+    }
+
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
       return {
         error: "Unable to update your password. Please try again.",
       };
+    }
+
+    // Notification delivery is best-effort and cannot undo a password change.
+    if (accountEmail) {
+      try {
+        await sendEmail({
+          to: accountEmail,
+          subject: "Your password was changed",
+          text:
+            "The password for your Social account was changed. " +
+            "If you made this change, no further action is needed. " +
+            "If you did not change your password, visit the sign-in page " +
+            "and use the password reset option to secure your account.",
+        });
+      } catch {
+        console.error(
+          "[auth] password-change notification delivery failed",
+        );
+      }
     }
   } catch {
     return {
